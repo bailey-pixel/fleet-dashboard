@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gale's Fleet Management Dashboard</title>
+    <!-- Load Google Fonts: Oswald (Headings) and Lato (Body) -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Oswald:wght=500;700&display=swap" rel="stylesheet">
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the app: Using Slate/Teal theme */
+        body {
+            font-family: 'Lato', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f4f8; /* Light slate background */
+            transition: background-color 300ms ease-in-out;
+        }
+
+        /* Custom font for headings */
+        .font-heading {
+            font-family: 'Oswald', sans-serif;
+            letter-spacing: 0.05em;
+        <!-- } -->
+
+        /* Dark mode background for the body */
+        .dark body {
+            background-color: #0f172a; /* Deep slate background */
+        }
+
+        /* Completed list item styling for the new theme */
+        .completed {
+            text-decoration: none;
+            opacity: 0.8;
+            background-color: #e2e8f0; /* Soft gray-blue */
+            border-color: #38bdf8; /* Vibrant sky-blue border to show completion */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Dark mode completed styling */
+        .dark .completed {
+            background-color: #1e293b; /* Deep slate */
+            opacity: 0.8;
+            border-color: #38bdf8;
+        }
+
+        /* Custom shadow for dark mode visibility */
+        .shadow-3xl-dark {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        /* --- Custom Nav Tab Styles --- */
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            font-family: 'Oswald', sans-serif;
+            letter-spacing: 0.025em;
+            transition: all 200ms ease-in-out;
+            border-bottom: 4px solid transparent;
+            cursor: pointer;
+            background-color: transparent;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            flex-grow: 1; /* For mobile responsiveness */
+            text-align: center;
+            white-space: nowrap; /* Prevent wrapping on tabs */
+        }
+        /* Active state */
+        .active-tab {
+            border-color: #0d9488; /* Teal 600 */
+            color: #0d9488; /* Teal 600 */
+            background-color: #f8fafc; /* Slate 50 */
+        }
+        .dark .active-tab {
+            border-color: #2dd4bf; /* Teal 400 */
+            color: #2dd4bf; /* Teal 400 */
+            background-color: #1e293b; /* Slate 800 */
+        }
+        /* Inactive state */
+        .inactive-tab {
+            color: #64748b; /* Slate 500 */
+            border-color: transparent;
+        }
+        .inactive-tab:hover {
+            color: #0f766e; /* Teal 700 on hover */
+            background-color: #f1f5f9; /* Slate 100 on hover */
+        }
+        .dark .inactive-tab {
+            color: #94a3b8; /* Slate 400 */
+        }
+        .dark .inactive-tab:hover {
+            color: #2dd4bf; /* Teal 400 on hover */
+            background-color: #334155; /* Slate 700 on hover */
+        }
+        
+        /* Disabled Tab Styling */
+        .disabled-tab {
+            cursor: not-allowed;
+            opacity: 0.5;
+            color: #94a3b8 !important; /* Slate 400 */
+            background-color: transparent !important;
+            border-color: transparent !important;
+        }
+        .dark .disabled-tab {
+             color: #475569 !important; /* Slate 600 */
+        }
+
+        /* Calendar Grid Styles */
+        .calendar-day {
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 5px;
+            cursor: default;
+            transition: background-color 0.1s;
+        }
+        
+        .calendar-day:not(.day-name) {
+             cursor: pointer;
+        }
+        
+        .calendar-day-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Oswald', sans-serif;
+            line-height: 1;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        .dark .calendar-grid {
+            border: 1px solid #334155;
+        }
+
+        .day-name {
+            background-color: #0f766e;
+            color: white;
+            font-weight: 700;
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 10px 5px;
+            min-height: 0;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Styling for days that are part of the current month */
+        .current-month {
+            background-color: white;
+            color: #1e293b;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .dark .current-month {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-bottom: 1px solid #334155;
+        }
+        
+        /* Styling for days that are NOT part of the current month */
+        .other-month {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+        }
+        .dark .other-month {
+            background-color: #334155;
+            color: #64748b;
+        }
+        
+        /* Highlight for today's date */
+        .today {
+            background-color: #f0f9ff; /* Light blue */
+            border: 2px solid #38bdf8; /* Sky 400 */
+            color: #0369a1;
+        }
+        .dark .today {
+             background-color: #075985;
+             color: white;
+        }
+
+        /* Highlight for a completed work day */
+        .work-day {
+            background-color: #d1fae5; /* Light mint green */
+            border: 2px solid #10b981; /* Emerald 500 */
+            position: relative;
+        }
+        .dark .work-day {
+             background-color: #065f46;
+             border: 2px solid #34d399;
+             color: white;
+        }
+        .work-day:after {
+            content: '❄️';
+            position: absolute;
+            bottom: 3px;
+            right: 5px;
+            font-size: 1.5rem;
+            line-height: 1;
+            transform: rotate(5deg);
+        }
+    </style>
+</head>
+<body class="p-4 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+
+    <div id="app" class="w-full max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 md:p-10 space-y-4 shadow-2xl dark:shadow-3xl-dark transition-colors duration-300">
+
+        <header class="flex justify-between items-start pb-4 border-b-4 border-teal-500/50 dark:border-teal-400/50">
+            <div class="flex-grow">
+                <h1 class="text-4xl sm:text-5xl font-heading font-extrabold text-slate-900 dark:text-slate-50 leading-tight tracking-wider transition-colors duration-300">
+                    FLEET MANAGEMENT
+                </h1>
+                <p class="text-xl font-bold text-teal-600 dark:text-teal-400 mt-1">Gale's Operations</p>
+                <p id="userIdDisplay" class="text-xs text-slate-500 dark:text-slate-400 mt-3 font-mono break-all transition-colors duration-300">
+                    User ID: Loading...
+                </p>
+            </div>
+
+            <!-- Dark Mode Toggle -->
+            <button id="darkModeToggle" class="p-3 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 hover:text-teal-600 dark:text-slate-300 dark:hover:text-teal-300 shadow-md transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-teal-400/50" title="Toggle Theme">
+                <svg id="sunIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="moonIcon" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Navigation Tabs (Updated to include Calendar) -->
+        <nav class="flex border-b border-slate-200 dark:border-slate-700 mb-6 overflow-x-auto">
+            <button id="navSnowRoutes" data-view="snowRoutes" class="nav-tab disabled-tab" disabled>
+                Snow Routes ❄️
+            </button>
+            <button id="navPreService" data-view="preService" class="nav-tab">
+                Pre-Service Check ✅
+            </button>
+            <button id="navPostService" data-view="postService" class="nav-tab">
+                Post-Service Check 🛠️
+            </button>
+            <button id="navCalendar" data-view="calendar" class="nav-tab">
+                Plow Calendar 📅
+            </button>
+            <button id="navGasTracker" data-view="gasTracker" class="nav-tab">
+                Gas Tracker ⛽
+            </button>
+        </nav>
+
+        <!-- SNOW ROUTES VIEW (Existing Dashboard Content) -->
+        <div id="snowRoutesView">
+            
+            <div id="routeLockWarning" class="p-5 mb-6 rounded-xl bg-red-100 dark:bg-red-900 border-2 border-red-400 text-red-800 dark:text-red-200 font-semibold transition-all duration-300">
+                <p class="flex items-center">
+                    <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-2-6h4m0 0V8m0 0H6m6 0h4m0 0v4m0 0H6m6-12a9 9 0 100 18 9 9 0 000-18z" />
+                    </svg>
+                    ACCESS LOCKED: You must complete the **Pre-Service Check** before starting the snow routes.
+                </p>
+            </div>
+            
+            <!-- Route Stats & Actions: Sharp, high-contrast block -->
+            <div class="flex flex-col md:flex-row justify-between items-center p-5 bg-gradient-to-r from-teal-500 to-cyan-600 dark:from-slate-700 dark:to-slate-900 rounded-xl shadow-lg border border-teal-400/50 dark:border-slate-600 transition-colors duration-300 mb-8">
+                <div class="text-3xl font-heading font-extrabold text-white dark:text-teal-400 mb-4 md:mb-0 drop-shadow-md">
+                    <span id="routeStatus">0/22 Passes Completed</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <!-- NEW EXPORT DATA BUTTON -->
+                    <button id="exportDataButton"
+                            class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider">
+                        Export Data 📊
+                    </button>
+
+                    <!-- Reset Button: Bright, contrasting color -->
+                    <button id="resetRouteButton"
+                            class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-8 rounded-lg shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
+                            disabled>
+                        Reset Route ❄️
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status and Route List -->
+            <div>
+                <!-- FILTER CONTROLS -->
+                <div class="mb-6 pt-4">
+                    <h3 class="text-sm font-heading font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Filter by Route Loop:</h3>
+                    <div id="filterContainer" class="flex flex-wrap gap-2 sm:gap-4">
+                        <!-- Filter buttons will be generated here by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Applied new font-heading class -->
+                <h2 class="text-xl font-heading font-bold text-slate-800 dark:text-slate-100 mb-4 transition-colors duration-300 uppercase tracking-widest">Route Schedule (11 Locations):</h2>
+                <div id="loadingStatus" class="text-center text-slate-500 dark:text-slate-400 p-6 transition-colors duration-300 bg-slate-100 dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600">
+                    Initializing tracker...
+                </div>
+                <ul id="routeList" class="space-y-4">
+                    <!-- Stops will be rendered here -->
+                </ul>
+            </div>
+            
+        </div>
+        <!-- END SNOW ROUTES VIEW -->
+        
+        <!-- PRE-SERVICE CHECKLIST VIEW -->
+        <div id="preServiceView" class="hidden p-6">
+            <h2 class="text-3xl font-heading font-extrabold text-slate-900 dark:text-slate-100 mb-4 tracking-wider">Vehicle Pre-Service Checklist</h2>
+            <p class="text-slate-600 dark:text-slate-300 mb-8 text-lg border-b pb-4 border-slate-200 dark:border-slate-700">
+                Ensure all fleet vehicles are operational and safe before dispatch. Completing this checklist is mandatory prior to a new route start.
+            </p>
+
+            <div class="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-xl space-y-4">
+                <h3 class="text-xl font-heading font-bold text-slate-800 dark:text-slate-100 border-b pb-2 mb-4">Daily Inspection Points</h3>
+                
+                <div class="space-y-3" id="checklistContainer">
+                    <!-- Item 1: Engine Fluids -->
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:shadow-md transition-shadow">
+                        <input type="checkbox" class="pre-service-item h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mr-4">
+                        <span class="text-lg font-semibold text-slate-700 dark:text-slate-200 flex-grow">Engine Fluid Levels (Oil, Coolant) Checked & Topped</span>
+                    </label>
+                    <!-- Item 2: Tires -->
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:shadow-md transition-shadow">
+                        <input type="checkbox" class="pre-service-item h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mr-4">
+                        <span class="text-lg font-semibold text-slate-700 dark:text-slate-200 flex-grow">Tire Pressure and Condition Confirmed</span>
+                    </label>
+                    <!-- Item 3: Plow Blade -->
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:shadow-md transition-shadow">
+                        <input type="checkbox" class="pre-service-item h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mr-4">
+                        <span class="text-lg font-semibold text-slate-700 dark:text-slate-200 flex-grow">Plow Blade and Scraper Integrity Inspection</span>
+                    </label>
+                    <!-- Item 4: Hydraulics -->
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:shadow-md transition-shadow">
+                        <input type="checkbox" class="pre-service-item h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mr-4">
+                        <span class="text-lg font-semibold text-slate-700 dark:text-slate-200 flex-grow">Hydraulic System (Hoses, Cylinders) Visual Check</span>
+                    </label>
+                    <!-- Item 5: Lights -->
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:shadow-md transition-shadow">
+                        <input type="checkbox" class="pre-service-item h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mr-4">
+                        <span class="text-lg font-semibold text-slate-700 dark:text-slate-200 flex-grow">Lights and Beacons Functioning Correctly</span>
+                    </label>
+                </div>
+                
+                <button id="submitPreServiceButton" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50" disabled>
+                    Finalize Pre-Service Report
+                </button>
+            </div>
+        </div>
+        <!-- END PRE-SERVICE CHECKLIST VIEW -->
+
+        <!-- POST-SERVICE CHECKLIST VIEW -->
+        <div id="postServiceView" class="hidden p-6">
+            <h2 class="text-3xl font-heading font-extrabold text-slate-900 dark:text-slate-100 mb-4 tracking-wider">Post-Service Checklist</h2>
+            <p class="text-slate-600 dark:text-slate-300 mb-8 text-lg border-b pb-4 border-slate-200 dark:border-slate-700">
+                Record any damages, maintenance needs, and clean the vehicle to prepare it for the next dispatch.
+            </p>
+
+            <div class="bg-white dark:bg-slate-700 rounded-xl p-6 shadow-xl space-y-4">
+                <h3 class="text-xl font-heading font-bold text-slate-800 dark:text-slate-100 border-b pb-2 mb-4">Post-Run Procedures</h3>
+                
+                <div class="space-y-3" id="postChecklistContainer">
+                    <!-- Item 1: Cleanup -->
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:shadow-md transition-shadow">
+                        <input type="checkbox" class="h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mr-4">
+                        <span class="text-lg font-semibold text-slate-700 dark:text-slate-200 flex-grow">Vehicle Washed and Salt/Brine Residue Removed</span>
+                    </label>
+                    <!-- Item 2: Fuel Status -->
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer hover:shadow-md transition-shadow">
+                        <input type="checkbox" class="h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mr-4">
+                        <span class="text-lg font-semibold text-slate-700 dark:text-slate-200 flex-grow">Fuel Tank Refilled (Minimum 80% Full)</span>
+                    </label>
+                    <!-- Item 3: Damage Report -->
+                    <label class="flex items-center p-3 bg-red-100 dark:bg-red-900 dark:text-white rounded-lg cursor-pointer hover:shadow-md transition-shadow border border-red-300">
+                        <input type="checkbox" class="h-5 w-5 text-red-600 border-red-300 rounded focus:ring-red-500 mr-4">
+                        <span class="text-lg font-semibold flex-grow text-red-800 dark:text-red-200">Reported Any New Damages/Scratches</span>
+                    </label>
+                    <!-- Item 4: Maintenance Notes -->
+                    <label class="flex flex-col p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Maintenance Notes (e.g., unusual sounds, low fluid):</span>
+                        <textarea rows="3" placeholder="Enter notes here..." class="w-full p-2 border border-gray-300 rounded-md dark:bg-slate-900 dark:text-white focus:ring-teal-500 focus:border-teal-500"></textarea>
+                    </label>
+                </div>
+                
+                <button class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all duration-200">
+                    Finalize Post-Service Report
+                </button>
+            </div>
+        </div>
+        <!-- END POST-SERVICE CHECKLIST VIEW -->
+
+        <!-- PLOW CALENDAR VIEW (NEW CONTENT) -->
+        <div id="calendarView" class="hidden p-6">
+            <h2 class="text-3xl font-heading font-extrabold text-slate-900 dark:text-slate-100 mb-4 tracking-wider">Plow Schedule Calendar</h2>
+            <p class="text-slate-600 dark:text-slate-300 mb-8 text-lg border-b pb-4 border-slate-200 dark:border-slate-700">
+                Days highlighted in green ❄️ indicate at least one completed route pass.
+            </p>
+
+            <!-- Calendar Header: Month/Year and Navigation -->
+            <div class="flex justify-between items-center mb-6 p-4 bg-teal-600 dark:bg-teal-700 text-white rounded-lg shadow-xl">
+                <button id="prevMonth" class="p-2 rounded-full hover:bg-teal-700 dark:hover:bg-teal-800 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h3 id="currentMonthYear" class="text-3xl font-heading font-bold tracking-wider">Loading...</h3>
+                <button id="nextMonth" class="p-2 rounded-full hover:bg-teal-700 dark:hover:bg-teal-800 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+
+            <!-- Calendar Grid Container -->
+            <div id="calendarGrid" class="calendar-grid">
+                <!-- Days will be rendered here by JavaScript -->
+            </div>
+        </div>
+        <!-- END PLOW CALENDAR VIEW -->
+        
+        <!-- GAS TRACKER VIEW (Existing Content) -->
+        <div id="gasTrackerView" class="hidden p-6">
+            <h2 class="text-3xl font-heading font-extrabold text-slate-900 dark:text-slate-100 mb-4 tracking-wider">Gas Price Tracker</h2>
+            <p class="text-slate-600 dark:text-slate-300 mb-8 text-lg border-b pb-4 border-slate-200 dark:border-slate-700">
+                Monitor local fuel costs and track fleet consumption metrics. This section will be integrated with a dedicated database for real-time pricing alerts.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1: Local Average -->
+                <div class="bg-teal-500 dark:bg-teal-700 text-white p-6 rounded-xl shadow-xl transition-all duration-300">
+                    <h3 class="text-xl font-heading font-semibold mb-2 uppercase">Local Average</h3>
+                    <p class="text-5xl font-heading font-bold">$1.659</p>
+                    <p class="text-lg opacity-80">/ Litre (Premium)</p>
+                    <p class="text-sm mt-3 opacity-70">Region 5: Niagara</p>
+                </div>
+
+                <!-- Card 2: Highest Price -->
+                <div class="bg-white dark:bg-slate-700 p-6 rounded-xl shadow-xl border-t-4 border-red-500 transition-all duration-300">
+                    <h3 class="text-xl font-heading font-semibold mb-2 text-red-600 dark:text-red-400 uppercase">Highest Reported</h3>
+                    <p class="text-5xl font-heading font-bold text-slate-800 dark:text-slate-50">$1.729</p>
+                    <p class="text-lg text-slate-500 dark:text-slate-400">/ Litre</p>
+                    <p class="text-sm mt-3 text-slate-500 dark:text-slate-400">Gales Gas Bar - NOTL</p>
+                </div>
+
+                <!-- Card 3: Consumption Rate -->
+                <div class="bg-white dark:bg-slate-700 p-6 rounded-xl shadow-xl border-t-4 border-blue-500 transition-all duration-300">
+                    <h3 class="text-xl font-heading font-semibold mb-2 text-blue-600 dark:text-blue-400 uppercase">Fleet KMs/Litre</h3>
+                    <p class="text-5xl font-heading font-bold">3.8</p>
+                    <p class="text-lg text-slate-500 dark:text-slate-400">Target: 4.0</p>
+                    <p class="text-sm mt-3 text-slate-500 dark:text-slate-400">Avg. 7-Day Performance</p>
+                </div>
+            </div>
+            
+            <div class="mt-8 p-6 bg-slate-100 dark:bg-slate-700 rounded-xl shadow-inner">
+                <h3 class="text-xl font-heading font-bold text-slate-800 dark:text-slate-100 mb-3">Add New Fuel Entry</h3>
+                <p class="text-slate-600 dark:text-slate-300 mb-4">Input the details for your latest refuel to update fleet metrics.</p>
+                <!-- Simple Input Form Mockup -->
+                <form class="space-y-3">
+                    <input type="number" placeholder="Fuel Price ($/L)" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 transition-colors">
+                    <input type="number" placeholder="Total Litres" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-teal-500 transition-colors">
+                    <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-md transition-all duration-200 disabled:opacity-50">
+                        Log Refuel Entry
+                    </button>
+                </form>
+            </div>
+            
+        </div>
+        <!-- END GAS TRACKER VIEW -->
+
+        <div id="messageBox" class="p-4 rounded-lg font-semibold dark:bg-red-950 dark:border-red-800 hidden transition-colors duration-300 shadow-lg"
+             style="background-color: var(--message-bg-color); border: 1px solid var(--message-border-color); color: white;">
+            <!-- Error and success messages will appear here -->
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase Setup Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, onSnapshot, query, updateDoc, getDocs, writeBatch, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase Instances
+        let app, db, auth, userId;
+        const COLLECTION_NAME = 'plow_stops';
+
+        // UI Elements
+        const routeList = document.getElementById('routeList');
+        const loadingStatus = document.getElementById('loadingStatus');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const messageBox = document.getElementById('messageBox');
+        const resetRouteButton = document.getElementById('resetRouteButton');
+        const exportDataButton = document.getElementById('exportDataButton');
+        const routeStatus = document.getElementById('routeStatus');
+        const routeLockWarning = document.getElementById('routeLockWarning'); 
+
+        // NEW: View Elements
+        const snowRoutesView = document.getElementById('snowRoutesView');
+        const gasTrackerView = document.getElementById('gasTrackerView');
+        const preServiceView = document.getElementById('preServiceView'); 
+        const postServiceView = document.getElementById('postServiceView'); 
+        const calendarView = document.getElementById('calendarView'); // NEW calendar view
+        
+        // Navigation Tabs
+        const navSnowRoutes = document.getElementById('navSnowRoutes');
+        const navGasTracker = document.getElementById('navGasTracker');
+        const navPreService = document.getElementById('navPreService'); 
+        const navPostService = document.getElementById('navPostService'); 
+        const navCalendar = document.getElementById('navCalendar'); // NEW calendar nav
+        
+        const submitPreServiceButton = document.getElementById('submitPreServiceButton');
+        const preServiceItems = document.querySelectorAll('.pre-service-item');
+        
+        // Calendar elements
+        const currentMonthYear = document.getElementById('currentMonthYear');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const prevMonthButton = document.getElementById('prevMonth');
+        const nextMonthButton = document.getElementById('nextMonth');
+
+
+        let currentView = 'preService'; 
+        let currentDate = new Date(); // State for the currently displayed calendar month
+
+        // Pre-Service Lockout State
+        let isPreServiceCompleted = false;
+        const PRE_SERVICE_KEY = 'preServiceCompleted';
+
+
+        // Dark Mode Elements
+        const htmlElement = document.documentElement;
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        // FILTER STATE AND ELEMENTS
+        const filterContainer = document.getElementById('filterContainer');
+        let currentFilter = 'All';
+        const LOOP_FILTERS = ['All', 'Priority', '24/7', 'Morning'];
+        let latestStops = []; // Cache to hold the latest data for filtering
+
+        // --- FIXED ROUTE DEFINITION (11 LOCATIONS * 2 PASSES = 22 TOTAL TASKS) ---
+        const ROUTE_STOPS = [
+            { name: "Gales Gas Bar - The Office", pass: "First Pass", address: "4388 Portage Rd, Niagara Falls, ON L2E 6A4", loop: "Priority", loopSortIndex: 1, passSortIndex: 1 },
+            { name: "Gales Gas Bar - The Office", pass: "Second Pass", address: "4388 Portage Rd, Niagara Falls, ON L2E 6A4", loop: "Priority", loopSortIndex: 1, passSortIndex: 2 },
+            { name: "Gales Gas Bar - Chippawa", pass: "First Pass", address: "7801 Portage Rd, Niagara Falls, ON L2G 5Y8", loop: "24/7", loopSortIndex: 2, passSortIndex: 1 },
+            { name: "Gales Gas Bar - Collier", pass: "First Pass", address: "157 Collier Rd S, Thorold, ON L2V 3T5", loop: "24/7", loopSortIndex: 2, passSortIndex: 1 },
+            { name: "Gales Gas Bar - St. Paul", pass: "First Pass", address: "235 St Paul St W, St. Catharines, ON L2S 2R4", loop: "24/7", loopSortIndex: 2, passSortIndex: 1 },
+            { name: "Gales Gas Bar - Thorold", pass: "First Pass", address: "7537 Regional Rd 57, Niagara Falls, ON L2H 1A1", loop: "24/7", loopSortIndex: 2, passSortIndex: 1 },
+            { name: "Gales Gas Bar - Chippawa", pass: "Second Pass", address: "7801 Portage Rd, Niagara Falls, ON L2G 5Y8", loop: "24/7", loopSortIndex: 2, passSortIndex: 2 },
+            { name: "Gales Gas Bar - Collier", pass: "Second Pass", address: "157 Collier Rd S, Thorold, ON L2V 3T5", loop: "24/7", loopSortIndex: 2, passSortIndex: 2 },
+            { name: "Gales Gas Bar - St. Paul", pass: "Second Pass", address: "235 St Paul St W, St. Catharines, ON L2S 2R4", loop: "24/7", loopSortIndex: 2, passSortIndex: 2 },
+            { name: "Gales Gas Bar - Thorold", pass: "Second Pass", address: "7537 Regional Rd 57, Niagara Falls, ON L2H 1A1", loop: "24/7", loopSortIndex: 2, passSortIndex: 2 },
+            { name: "Gales Gas Bar - Drummond", pass: "First Pass", address: "5014 Drummond Rd, Niagara Falls, ON L2E 6E3", loop: "Morning", loopSortIndex: 3, passSortIndex: 1 },
+            { name: "Gales Gas Bar - Gilmore", pass: "First Pass", address: "302 Gilmore Rd, Fort Erie, ON L2A 2M8", loop: "Morning", loopSortIndex: 3, passSortIndex: 1 },
+            { name: "Gales Gas Bar - NOTL", pass: "First Pass", address: "1487 Niagara Stone Rd, Niagara-on-the-Lake, ON L0S 1T0", loop: "Morning", loopSortIndex: 3, passSortIndex: 1 },
+            { name: "Gales Gas Bar - St. Davids", pass: "First Pass", address: "1353 York Rd, St. Davids, ON L0S 1P0", loop: "Morning", loopSortIndex: 3, passSortIndex: 1 },
+            { name: "Gales Gas Bar - St. Peter", pass: "First Pass", address: "6331 Regional Rd 57, Niagara Falls, ON L2J 1A9", loop: "Morning", loopSortIndex: 3, passSortIndex: 1 },
+            { name: "Gales Gas Bar - Welland Ave", pass: "First Pass", address: "143 Welland Ave, St. Catharines, ON L2R 2N5", loop: "Morning", loopSortIndex: 3, passSortIndex: 1 },
+            { name: "Gales Gas Bar - Drummond", pass: "Second Pass", address: "5014 Drummond Rd, Niagara Falls, ON L2E 6E3", loop: "Morning", loopSortIndex: 3, passSortIndex: 2 },
+            { name: "Gales Gas Bar - Gilmore", pass: "Second Pass", address: "302 Gilmore Rd, Fort Erie, ON L2A 2M8", loop: "Morning", loopSortIndex: 3, passSortIndex: 2 },
+            { name: "Gales Gas Bar - NOTL", pass: "Second Pass", address: "1487 Niagara Stone Rd, Niagara-on-the-Lake, ON L0S 1T0", loop: "Morning", loopSortIndex: 3, passSortIndex: 2 },
+            { name: "Gales Gas Bar - St. Davids", pass: "Second Pass", address: "1353 York Rd, St. Davids, ON L0S 1P0", loop: "Morning", loopSortIndex: 3, passSortIndex: 2 },
+            { name: "Gales Gas Bar - St. Peter", pass: "Second Pass", address: "6331 Regional Rd 57, Niagara Falls, ON L2J 1A9", loop: "Morning", loopSortIndex: 3, passSortIndex: 2 },
+            { name: "Gales Gas Bar - Welland Ave", pass: "Second Pass", address: "143 Welland Ave, St. Catharines, ON L2R 2N5", loop: "Morning", loopSortIndex: 3, passSortIndex: 2 },
+        ];
+
+
+        // --- Firebase Initialization and Auth ---
+
+        setLogLevel('Debug'); // Enable Firestore logging
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        /** Utility function to format Firestore Timestamps */
+        function formatTimestamp(timestamp) {
+            if (!timestamp || !timestamp.toDate) return 'N/A';
+            const date = timestamp.toDate();
+            const datePart = date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+            const timePart = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            return `${datePart} ${timePart}`;
+        }
+
+        /** Utility function to calculate duration */
+        function calculateDuration(start, end) {
+            if (!start || !end || !start.toDate || !end.toDate) return null;
+            const diffMs = end.toDate().getTime() - start.toDate().getTime();
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}m ${seconds}s`;
+        }
+
+        /** Shows a success/info message temporarily in the message box. */
+        function showTemporaryMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+
+            if (isError) {
+                messageBox.style.setProperty('--message-bg-color', 'rgb(153 27 27)');
+                messageBox.style.setProperty('--message-border-color', 'rgb(127 29 29)');
+            } else {
+                messageBox.style.setProperty('--message-bg-color', 'rgb(4 120 87)');
+                messageBox.style.setProperty('--message-border-color', 'rgb(6 95 70)');
+            }
+
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+                messageBox.style.setProperty('--message-bg-color', 'rgb(127 29 29)');
+                messageBox.style.setProperty('--message-border-color', 'rgb(153 27 27)');
+            }, 4000);
+        }
+
+        /** Displays an error message in the dedicated UI box. */
+        function displayError(message) {
+            console.error(message);
+            showTemporaryMessage(`Failed: ${message}`, true);
+        }
+
+        /** Initializes Firebase and authenticates the user. */
+        async function initFirebase() {
+            try {
+                if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase configuration is missing or empty.");
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                loadingStatus.textContent = 'Authenticating...';
+
+                // Handle authentication
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Set up auth state change listener (to get userId after sign-in)
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = `User ID: ${userId}`;
+                        loadingStatus.textContent = 'Tracker ready. Loading stops...';
+                        resetRouteButton.disabled = false;
+                        exportDataButton.disabled = false;
+
+                        setupRealtimeListener(userId);
+                    } else {
+                        userId = 'anonymous';
+                        userIdDisplay.textContent = `User ID: (Signed Out)`;
+                        loadingStatus.textContent = 'Authentication failed. Please check your token.';
+                        resetRouteButton.disabled = true;
+                        exportDataButton.disabled = true;
+                    }
+                });
+                
+                // Initialize the lock state and view after Firebase starts
+                checkPreServiceStatus();
+                updateNavigationState();
+                switchView(isPreServiceCompleted ? 'snowRoutes' : 'preService');
+
+            } catch (error) {
+                displayError("Failed to initialize Firebase or authenticate: " + error.message);
+                loadingStatus.textContent = 'Initialization Failed.';
+                resetRouteButton.disabled = true;
+                exportDataButton.disabled = true;
+            }
+        }
+        
+        // --- Pre-Service Lockout Logic ---
+
+        /** Checks local storage for the completion status and updates the global state. */
+        function checkPreServiceStatus() {
+            isPreServiceCompleted = localStorage.getItem(PRE_SERVICE_KEY) === 'true';
+        }
+
+        /** Updates the Snow Routes tab status and warning message based on the completion state. */
+        function updateNavigationState() {
+            if (isPreServiceCompleted) {
+                // Enable Snow Routes
+                navSnowRoutes.disabled = false;
+                navSnowRoutes.classList.remove('disabled-tab');
+                routeLockWarning.classList.add('hidden');
+            } else {
+                // Disable Snow Routes
+                navSnowRoutes.disabled = true;
+                navSnowRoutes.classList.add('disabled-tab');
+                routeLockWarning.classList.remove('hidden');
+            }
+            // Also enable/disable the submit button based on all checklist items being checked
+            checkChecklistCompletion();
+        }
+        
+        /** Checks if all items in the pre-service checklist are checked and enables the submit button. */
+        function checkChecklistCompletion() {
+            let allChecked = true;
+            preServiceItems.forEach(item => {
+                if (!item.checked) {
+                    allChecked = false;
+                }
+            });
+            submitPreServiceButton.disabled = !allChecked;
+        }
+        
+        /** Finalizes the pre-service checklist, enabling the Snow Routes. */
+        function finalizePreService() {
+            // Logically "completes" the check
+            localStorage.setItem(PRE_SERVICE_KEY, 'true');
+            isPreServiceCompleted = true;
+            updateNavigationState();
+            showTemporaryMessage('Pre-Service Check finalized! Snow Routes are now active.', false);
+            // Optionally redirect to the Snow Routes tab
+            switchView('snowRoutes');
+        }
+
+
+        // --- View Switching Logic (Updated for Lockout) ---
+
+        /** Switches the active content view and updates navigation tab styling. */
+        function switchView(viewName) {
+            // Enforcement: If trying to access snowRoutes and pre-service is not done, force to preService
+            if (viewName === 'snowRoutes' && !isPreServiceCompleted) {
+                showTemporaryMessage('Access Denied. Please complete the Pre-Service Check first.', true);
+                viewName = 'preService';
+            }
+            
+            currentView = viewName;
+            
+            // Hide all views
+            snowRoutesView.classList.add('hidden');
+            gasTrackerView.classList.add('hidden');
+            preServiceView.classList.add('hidden');
+            postServiceView.classList.add('hidden');
+            calendarView.classList.add('hidden'); // Hide new calendar view
+            
+            // Deactivate all tabs
+            const allNavTabs = [navSnowRoutes, navGasTracker, navPreService, navPostService, navCalendar];
+            allNavTabs.forEach(tab => {
+                tab.classList.remove('active-tab');
+                tab.classList.add('inactive-tab');
+            });
+
+            // Show and activate the selected view/tab
+            let activeTab;
+            let activeViewElement;
+
+            if (viewName === 'snowRoutes') {
+                activeViewElement = snowRoutesView;
+                activeTab = navSnowRoutes;
+            } else if (viewName === 'gasTracker') {
+                activeViewElement = gasTrackerView;
+                activeTab = navGasTracker;
+            } else if (viewName === 'preService') {
+                activeViewElement = preServiceView;
+                activeTab = navPreService;
+            } else if (viewName === 'postService') {
+                activeViewElement = postServiceView;
+                activeTab = navPostService;
+            } else if (viewName === 'calendar') {
+                 activeViewElement = calendarView;
+                 activeTab = navCalendar;
+                 // RENDER CALENDAR immediately when switching to it
+                 renderCalendar(latestStops);
+            }
+
+
+            if (activeViewElement) {
+                activeViewElement.classList.remove('hidden');
+            }
+            if (activeTab) {
+                 activeTab.classList.add('active-tab');
+                 activeTab.classList.remove('inactive-tab');
+            }
+            
+            // Enable/Disable buttons based on view (only allow reset/export on snowRoutes view)
+            const disableButtons = viewName !== 'snowRoutes' || !isPreServiceCompleted;
+            resetRouteButton.disabled = disableButtons;
+            exportDataButton.disabled = disableButtons;
+        }
+
+        // --- Firestore Operations ---
+
+        /** Sets up the real-time listener for the user's plow stops. */
+        function setupRealtimeListener(currentUserId) {
+            const stopsRef = collection(db, 'artifacts', appId, 'users', currentUserId, COLLECTION_NAME);
+            const q = query(stopsRef);
+
+            onSnapshot(q, (snapshot) => {
+                const stops = [];
+                snapshot.forEach((doc) => {
+                    stops.push({ id: doc.id, ...doc.data() });
+                });
+
+                latestStops = stops;
+
+                if (stops.length === 0 && userId) {
+                    seedInitialRoute();
+                }
+
+                if (!filterContainer.hasChildNodes() || stops.length > 0) {
+                    renderFilters();
+                }
+
+                renderStops(stops);
+                loadingStatus.classList.add('hidden');
+                
+                // Re-render calendar if it is the active view and data changed
+                if (currentView === 'calendar') {
+                     renderCalendar(latestStops);
+                }
+
+            }, (error) => {
+                displayError("Error listening to route updates: " + error.message);
+            });
+        }
+
+        /** Seeds the database with the predefined route stops. */
+        async function seedInitialRoute() {
+            if (!userId) return;
+            loadingStatus.textContent = 'Seeding initial route... (22 tasks)';
+
+            try {
+                const stopsRef = collection(db, 'artifacts', appId, 'users', userId, COLLECTION_NAME);
+                const batch = writeBatch(db);
+
+                ROUTE_STOPS.forEach(stop => {
+                    const newDocRef = doc(stopsRef);
+                    batch.set(newDocRef, {
+                        name: stop.name,
+                        pass: stop.pass,
+                        passSortIndex: stop.passSortIndex,
+                        address: stop.address,
+                        loop: stop.loop,
+                        loopSortIndex: stop.loopSortIndex,
+                        isCompleted: false,
+                        startTime: null,
+                        finishTime: null,
+                        createdAt: serverTimestamp()
+                    });
+                });
+
+                await batch.commit();
+                showTemporaryMessage('Route seeded successfully.');
+            } catch (error) {
+                displayError("Failed to seed initial route: " + error.message);
+            }
+        }
+
+        /** Clears all existing stops from the database. */
+        async function clearRoute() {
+            if (!userId || currentView !== 'snowRoutes') return; // Guard against running in wrong view
+            resetRouteButton.disabled = true;
+            exportDataButton.disabled = true;
+            loadingStatus.textContent = 'Clearing old route data...';
+            loadingStatus.classList.remove('hidden');
+
+            try {
+                const stopsRef = collection(db, 'artifacts', appId, 'users', userId, COLLECTION_NAME);
+                const snapshot = await getDocs(query(stopsRef));
+                const batch = writeBatch(db);
+
+                if (snapshot.docs.length > 0) {
+                    snapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                }
+
+                // Immediately re-seed the route after clearing
+                await seedInitialRoute();
+
+            } catch (error) {
+                displayError("Failed to clear and reset route: " + error.message);
+            } finally {
+                resetRouteButton.disabled = false;
+                exportDataButton.disabled = false;
+            }
+        }
+
+
+        /** Toggles the completion status of a stop, handling the three states: Not Started, In Progress, Complete. */
+        async function toggleStopStatus(passData) {
+            if (!userId) return;
+            try {
+                const stopDocRef = doc(db, 'artifacts', appId, 'users', userId, COLLECTION_NAME, passData.id);
+
+                let updateData = {};
+
+                if (passData.isCompleted) {
+                    // State 3 (Completed) -> State 1 (Reset)
+                    updateData = {
+                        isCompleted: false,
+                        startTime: null,
+                        finishTime: null,
+                    };
+                } else if (passData.startTime) {
+                    // State 2 (In Progress) -> State 3 (Finish)
+                    updateData = {
+                        isCompleted: true,
+                        finishTime: serverTimestamp()
+                    };
+                } else {
+                    // State 1 (Not Started) -> State 2 (Start)
+                    updateData = {
+                        startTime: serverTimestamp()
+                    };
+                }
+
+                await updateDoc(stopDocRef, updateData);
+            } catch (error) {
+                displayError("Failed to update status: " + error.message);
+            }
+        }
+
+        // --- Filtering Logic ---
+
+        /** Sets the new filter, updates the button highlight, and triggers a UI re-render. */
+        function setFilterAndRender(newFilter) {
+            if (currentFilter === newFilter) return;
+
+            currentFilter = newFilter;
+            renderFilters();
+            if (latestStops.length > 0) {
+                 renderStops(latestStops);
+            }
+        }
+
+        /** Generates the filter buttons and sets their active state. */
+        function renderFilters() {
+            filterContainer.innerHTML = '';
+
+            LOOP_FILTERS.forEach(filterName => {
+                const button = document.createElement('button');
+                button.textContent = filterName;
+                button.setAttribute('data-filter', filterName);
+
+                let baseClasses = 'px-4 py-2 text-sm font-semibold rounded-full shadow-md transition-all duration-200 ease-in-out';
+                let activeClasses = 'bg-teal-600 text-white hover:bg-teal-700 transform scale-105';
+                let inactiveClasses = 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600';
+
+                if (filterName === currentFilter) {
+                    button.className = `${baseClasses} ${activeClasses}`;
+                } else {
+                    button.className = `${baseClasses} ${inactiveClasses}`;
+                }
+
+                button.addEventListener('click', () => setFilterAndRender(filterName));
+                filterContainer.appendChild(button);
+            });
+        }
+
+
+        // --- UI Rendering ---
+
+        /** Custom sorting logic for the 22 individual pass documents. */
+        function sortStops(a, b) {
+            if (a.loopSortIndex !== b.loopSortIndex) {
+                return a.loopSortIndex - b.loopSortIndex;
+            }
+            return a.name.localeCompare(b.name);
+        }
+
+        /** Renders the list of stops from Firestore data, grouping by location and applying current filter. */
+        function renderStops(stops) {
+            routeList.innerHTML = '';
+            
+            // Only render if the current view is 'snowRoutes'
+            if(currentView !== 'snowRoutes') return;
+
+            const completedCount = stops.filter(s => s.isCompleted).length;
+            const totalCount = ROUTE_STOPS.length;
+            routeStatus.textContent = `${completedCount}/${totalCount} Passes Completed`;
+
+
+            if (stops.length === 0) {
+                routeList.innerHTML = `<li class="text-center p-6 rounded-xl transition-colors duration-300 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm">Route list is empty. Click "Reset Route" to load the ${totalCount} tasks.</li>`;
+                return;
+            }
+
+            const filteredStops = currentFilter === 'All'
+                ? stops
+                : stops.filter(stop => stop.loop === currentFilter);
+
+            if (filteredStops.length === 0) {
+                 routeList.innerHTML = `<li class="text-center p-6 rounded-xl transition-colors duration-300 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm">No routes found in the "${currentFilter}" loop.</li>`;
+                 return;
+            }
+
+            const groupedStops = new Map();
+            filteredStops.sort(sortStops);
+
+            filteredStops.forEach(stop => {
+                const key = stop.name;
+                if (!groupedStops.has(key)) {
+                    groupedStops.set(key, {
+                        name: stop.name,
+                        address: stop.address,
+                        loop: stop.loop,
+                        loopSortIndex: stop.loopSortIndex,
+                        passes: {}
+                    });
+                }
+                groupedStops.get(key).passes[stop.pass] = stop;
+            });
+
+            const sortedLocations = Array.from(groupedStops.values()).sort((a, b) => {
+                return a.loopSortIndex - b.loopSortIndex;
+            });
+
+
+            sortedLocations.forEach(location => {
+                const firstPass = location.passes['First Pass'];
+                const secondPass = location.passes['Second Pass'];
+
+                const listItem = document.createElement('li');
+                const baseClasses = 'flex flex-col p-5 rounded-xl shadow-lg border-b-4 transition-all duration-200 ease-in-out hover:shadow-xl';
+
+                const borderColor = location.loop === 'Priority' ? 'border-red-500' : 'border-teal-500';
+                const isFullyCompleted = firstPass?.isCompleted && secondPass?.isCompleted;
+
+                let statusClasses;
+                if (isFullyCompleted) {
+                    statusClasses = 'completed border-sky-400 dark:border-sky-600';
+                } else {
+                    statusClasses = `bg-white dark:bg-slate-700 ${borderColor}`;
+                }
+
+                listItem.className = `${baseClasses} ${statusClasses}`;
+
+                // --- Info Group (Name, Address) ---
+                const infoGroup = document.createElement('div');
+                infoGroup.className = 'flex-grow mb-3';
+
+                const loopTag = document.createElement('span');
+                loopTag.textContent = location.loop;
+                loopTag.className = `inline-block text-xs font-bold px-3 py-1 rounded-full mr-2 ${
+                    location.loop === 'Priority' ? 'bg-red-600 text-white' :
+                    location.loop === '24/7' ? 'bg-amber-400 text-slate-900' :
+                    'bg-teal-600 text-white'
+                } shadow-sm uppercase tracking-wider`;
+                infoGroup.appendChild(loopTag);
+
+                const nameElement = document.createElement('div');
+                nameElement.textContent = location.name;
+                nameElement.className = `text-2xl font-extrabold transition-colors duration-200 mt-2 leading-tight ${
+                    isFullyCompleted
+                        ? 'text-slate-500 dark:text-slate-400'
+                        : 'text-slate-800 dark:text-slate-100'
+                }`;
+                infoGroup.appendChild(nameElement);
+
+                const addressElement = document.createElement('div');
+                addressElement.textContent = location.address;
+                addressElement.className = `text-base text-slate-500 dark:text-slate-400 mt-1 ${isFullyCompleted ? 'italic' : ''}`;
+                infoGroup.appendChild(addressElement);
+
+                listItem.appendChild(infoGroup);
+
+                // --- Action Group (Two Pass Buttons and Time Tracking) ---
+                const actionGroup = document.createElement('div');
+                actionGroup.className = 'flex flex-col sm:flex-row items-stretch gap-3 pt-4 border-t border-slate-200 dark:border-slate-600 w-full';
+
+                const createPassControl = (passData, passName, baseColor) => {
+                    const block = document.createElement('div');
+                    block.className = 'flex-1 flex flex-col items-start p-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-600';
+
+                    const isCompleted = passData.isCompleted;
+                    const isStarted = !!passData.startTime;
+
+                    let buttonText, buttonClasses, statusIcon;
+
+                    if (isCompleted) {
+                        buttonText = `DONE (Tap to Reset)`;
+                        buttonClasses = 'bg-slate-500 text-white hover:bg-slate-600';
+                        statusIcon = '<svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    } else if (isStarted) {
+                        buttonText = `FINISH PASS`;
+                        buttonClasses = `bg-red-500 text-white hover:bg-red-600 animate-pulse`;
+                        statusIcon = '<svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                    } else {
+                        buttonText = `START ${passName}`;
+                        buttonClasses = `bg-${baseColor}-500 text-white hover:bg-${baseColor}-600`;
+                        statusIcon = '<svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
+                    }
+
+                    const button = document.createElement('button');
+                    button.innerHTML = `${statusIcon}${buttonText}`;
+                    button.className = `flex items-center justify-center text-sm font-bold rounded-lg transition-all duration-150 ease-in-out shadow-md transform hover:scale-[1.01] active:scale-[0.99] uppercase tracking-wider w-full mb-2 p-3 ${buttonClasses}`;
+
+                    button.addEventListener('click', () => toggleStopStatus(passData));
+
+                    block.appendChild(button);
+
+                    // --- Time Tracking Display ---
+                    const timeDiv = document.createElement('div');
+                    timeDiv.className = 'text-xs font-mono w-full space-y-1 text-slate-700 dark:text-slate-300';
+
+                    let timeContent = '';
+
+                    if (isCompleted) {
+                        const duration = calculateDuration(passData.startTime, passData.finishTime);
+                        timeContent += `<p class="font-semibold text-teal-600 dark:text-teal-400">Duration: ${duration}</p>`;
+                        timeContent += `<p>Start: ${formatTimestamp(passData.startTime)}</p>`;
+                        timeContent += `<p>Finish: ${formatTimestamp(passData.finishTime)}</p>`;
+                    } else if (isStarted) {
+                        timeContent += `<p class="font-semibold text-red-500">Plowing since: ${formatTimestamp(passData.startTime)}</p>`;
+                    } else {
+                         timeContent += `<p class="text-slate-500 dark:text-slate-400">Status: Pending</p>`;
+                    }
+
+                    timeDiv.innerHTML = timeContent;
+                    block.appendChild(timeDiv);
+
+                    return block;
+                };
+
+                if (firstPass) {
+                    actionGroup.appendChild(createPassControl(firstPass, 'First Pass', 'teal'));
+                }
+
+                if (secondPass) {
+                    actionGroup.appendChild(createPassControl(secondPass, 'Second Pass', 'sky'));
+                }
+
+                listItem.appendChild(actionGroup);
+                routeList.appendChild(listItem);
+            });
+        }
+
+        // --- Calendar Logic ---
+
+        const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        /** Generates a Set of 'YYYY-MM-DD' strings for all days where a stop was completed. */
+        function getCompletedWorkDays(stops) {
+            const completedDates = new Set();
+            stops.forEach(stop => {
+                if (stop.isCompleted && stop.finishTime && stop.finishTime.toDate) {
+                    const dateString = stop.finishTime.toDate().toISOString().split('T')[0];
+                    completedDates.add(dateString);
+                }
+            });
+            return completedDates;
+        }
+
+        /** Renders the calendar grid for the currentMonth based on the stops data. */
+        function renderCalendar(stops) {
+            calendarGrid.innerHTML = '';
+            
+            // Do not render if not in calendar view
+            if (currentView !== 'calendar') return; 
+
+            // 1. Update Header
+            const monthName = currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+            currentMonthYear.textContent = monthName;
+
+            // 2. Determine work days
+            const completedWorkDays = getCompletedWorkDays(stops);
+            const today = new Date().toISOString().split('T')[0];
+
+            // 3. Calculate calendar bounds
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth(); // 0-indexed
+            
+            // First day of the month (0=Sun, 6=Sat)
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            // Last day of the current month
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            // Days to show from the previous month
+            const daysFromPrevMonth = firstDayOfMonth;
+            // Days in the previous month (needed for numbering)
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            // 4. Render Weekday Headers
+            WEEKDAYS.forEach(day => {
+                const dayEl = document.createElement('div');
+                dayEl.textContent = day;
+                dayEl.className = 'calendar-day day-name text-center text-xs';
+                calendarGrid.appendChild(dayEl);
+            });
+
+            // 5. Render Previous Month's Days
+            for (let i = 0; i < daysFromPrevMonth; i++) {
+                const dayEl = document.createElement('div');
+                const dayNum = daysInPrevMonth - daysFromPrevMonth + i + 1;
+                dayEl.innerHTML = `<span class="calendar-day-number">${dayNum}</span>`;
+                dayEl.className = 'calendar-day other-month';
+                calendarGrid.appendChild(dayEl);
+            }
+
+            // 6. Render Current Month's Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateString = date.toISOString().split('T')[0];
+
+                const dayEl = document.createElement('div');
+                dayEl.innerHTML = `<span class="calendar-day-number">${day}</span>`;
+                dayEl.className = 'calendar-day current-month';
+
+                // Check for today's date
+                if (dateString === today) {
+                    dayEl.classList.add('today');
+                }
+
+                // Check for completed work day
+                if (completedWorkDays.has(dateString)) {
+                    dayEl.classList.add('work-day');
+                    dayEl.setAttribute('title', 'Plow Day Completed');
+                }
+                
+                calendarGrid.appendChild(dayEl);
+            }
+
+            // 7. Render Next Month's Days (to fill the grid)
+            const totalDaysRendered = daysFromPrevMonth + daysInMonth;
+            const remainingCells = 42 - totalDaysRendered; // Max 6 weeks * 7 days = 42 cells
+
+            for (let i = 1; i <= remainingCells; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.innerHTML = `<span class="calendar-day-number">${i}</span>`;
+                dayEl.className = 'calendar-day other-month';
+                calendarGrid.appendChild(dayEl);
+            }
+        }
+        
+        /** Changes the calendar month by the given offset (-1 for previous, 1 for next). */
+        function changeMonth(offset) {
+            currentDate.setMonth(currentDate.getMonth() + offset);
+            renderCalendar(latestStops);
+        }
+
+        // --- Export Logic ---
+
+        /** Converts an array of objects to a CSV string. */
+        function convertToCSV(data) {
+            if (data.length === 0) return "";
+
+            const headers = [
+                "LocationName", "Pass", "Loop", "Address",
+                "IsCompleted", "StartTime", "FinishTime",
+                "Duration", "DocumentID"
+            ];
+
+            let csv = headers.join(',') + '\n';
+
+            data.forEach(item => {
+                const row = headers.map(fieldName => {
+                    let value;
+
+                    switch (fieldName) {
+                        case 'LocationName': value = item.name; break;
+                        case 'Pass': value = item.pass; break;
+                        case 'Loop': value = item.loop; break;
+                        case 'Address': value = item.address; break;
+                        case 'IsCompleted': value = item.isCompleted ? 'TRUE' : 'FALSE'; break;
+                        case 'StartTime': value = formatTimestamp(item.startTime); break;
+                        case 'FinishTime': value = formatTimestamp(item.finishTime); break;
+                        case 'Duration': value = calculateDuration(item.startTime, item.finishTime) || 'N/A'; break;
+                        case 'DocumentID': value = item.id; break;
+                        default: value = '';
+                    }
+
+                    if (value === null || value === undefined) {
+                        value = '';
+                    }
+
+                    if (typeof value === 'string') {
+                        value = value.replace(/"/g, '""');
+                        if (value.includes(',') || value.includes('\n')) {
+                            value = `"${value}"`;
+                        }
+                    }
+                    return value;
+                }).join(',');
+                csv += row + '\n';
+            });
+
+            return csv;
+        }
+
+        /** Triggers the download of a CSV file. */
+        function downloadCSV(csvString, filename) {
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+        }
+
+        /** Main export function tied to the button. */
+        function exportData() {
+            if (latestStops.length === 0) {
+                showTemporaryMessage("No data loaded to export. Please wait for the route to initialize.");
+                return;
+            }
+
+            const csv = convertToCSV(latestStops);
+            const date = new Date().toISOString().slice(0, 10);
+            const filename = `gales_plow_route_${date}.csv`;
+
+            downloadCSV(csv, filename);
+            showTemporaryMessage(`Data exported successfully as ${filename}!`);
+        }
+
+        // --- Dark Mode Logic ---
+
+        /** Updates the visibility of the sun/moon icons. */
+        function updateIcon(isDark) {
+            if (isDark) {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+
+        /** Toggles the dark mode class on the HTML element. */
+        function toggleDarkMode() {
+            htmlElement.classList.toggle('dark');
+            const isDark = htmlElement.classList.contains('dark');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+            updateIcon(isDark);
+        }
+
+        // --- Event Listeners and Initial Call ---
+
+        // View Switch Listeners
+        navSnowRoutes.addEventListener('click', (e) => {
+            // Check the lock status before switching
+            if (e.currentTarget.disabled) {
+                showTemporaryMessage('Access Denied. Please complete the Pre-Service Check first.', true);
+                switchView('preService'); // Force stay on preService view
+            } else {
+                switchView('snowRoutes');
+            }
+        });
+        navGasTracker.addEventListener('click', () => switchView('gasTracker'));
+        navPreService.addEventListener('click', () => switchView('preService'));
+        navPostService.addEventListener('click', () => switchView('postService')); 
+        navCalendar.addEventListener('click', () => switchView('calendar')); // NEW Calendar Listener
+
+        // Pre-Service Checklist Listeners
+        submitPreServiceButton.addEventListener('click', finalizePreService);
+        preServiceItems.forEach(item => {
+            item.addEventListener('change', checkChecklistCompletion);
+        });
+        
+        // Calendar Navigation Listeners
+        prevMonthButton.addEventListener('click', () => changeMonth(-1));
+        nextMonthButton.addEventListener('click', () => changeMonth(1));
+
+
+        // Dark Mode Toggle Listener
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        // Export Data Listener
+        exportDataButton.addEventListener('click', exportData);
+
+        // Initial Dark Mode Setup
+        const storedDarkMode = localStorage.getItem('darkMode');
+        if (storedDarkMode === 'enabled' || (storedDarkMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+             htmlElement.classList.add('dark');
+        }
+        updateIcon(htmlElement.classList.contains('dark'));
+
+
+        // Reset Route Button Listener
+        resetRouteButton.addEventListener('click', () => {
+             // Use a custom modal instead of alert()
+             if (window.confirm("Are you sure you want to reset the entire snow route? This action cannot be undone.")) {
+                 clearRoute();
+             }
+        });
+
+        // Start the application
+        window.onload = initFirebase;
+
+    </script>
+</body>
+</html>
